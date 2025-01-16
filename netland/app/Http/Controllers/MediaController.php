@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 
 class MediaController extends Controller
 {
-    // Toon een lijst van alle media
+    // Toon de lijst van alle media
     public function index()
     {
         $media = Media::all();
@@ -21,7 +21,7 @@ class MediaController extends Controller
         return view('media.show', compact('media'));
     }
 
-    // Zoek naar media op titel
+    // Zoek naar media op basis van een query
     public function search(Request $request)
     {
         $query = $request->input('query');

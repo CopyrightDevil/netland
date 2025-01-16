@@ -21,5 +21,7 @@
             @endforeach
         </ul>
     @endif
+
+    <a href="{{ route('actors.index') }}">Bekijk acteurs</a>
 </body>
 </html>
