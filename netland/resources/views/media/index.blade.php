@@ -23,5 +23,6 @@
     @endif
 
     <a href="{{ route('actors.index') }}">Bekijk acteurs</a>
+    <a href="{{ route('media.create') }}">Nieuwe Media Toevoegen</a>
 </body>
 </html>
