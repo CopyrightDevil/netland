@@ -2,52 +2,56 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Media;
+use App\Services\OmdbService;
 use Illuminate\Http\Request;
 
 class MediaController extends Controller
 {
+    protected $omdbService;
+
+    public function __construct(OmdbService $omdbService)
+    {
+        $this->omdbService = $omdbService;
+    }
+
     // Toon de lijst van alle media
     public function index()
     {
-        $media = Media::all();
-        return view('media.index', compact('media'));
+        return redirect()->route('media.search'); // Stuur gebruikers direct naar de zoekpagina
     }
 
-    // Toon details van een specifieke media
-    public function show($id)
-    {
-        $media = Media::with('actors')->findOrFail($id);
-        return view('media.show', compact('media'));
-    }
-
-    // Zoek naar media op basis van een query
+    // Zoek naar media via de OMDB API
     public function search(Request $request)
     {
         $query = $request->input('query');
-        $results = Media::where('title', 'like', '%' . $query . '%')->get();
-        return view('media.search', compact('results', 'query'));
+
+        if (!$query) {
+            return redirect()->back()->with('error', 'Voer een zoekterm in.');
+        }
+
+        $results = $this->omdbService->search($query);
+
+        return view('media.search', [
+            'query' => $query,
+            'results' => $results['Search'] ?? [], // Gebruik 'Search' sleutel in API-resultaten
+        ]);
     }
-    public function store(Request $request)
-{
-    $validated = $request->validate([
-        'title' => 'required|string|max:255',
-        'rating' => 'required|numeric|min:0|max:10',
-        'length_in_minutes' => 'required|integer|min:1',
-        'released_at' => 'required|date',
-        'country_of_origin' => 'required|string|max:255',
-        'youtube_trailer_id' => 'nullable|string|max:255',
-        'summary' => 'required|string',
-        'spoken_in_language' => 'required|string|max:255',
-        'type' => 'required|in:movie,series',
-    ]);
 
-    Media::create($validated);
+    // Toon details van een specifieke media via OMDB API
+    public function showDetails($imdbId)
+    {
+        $details = $this->omdbService->getDetails($imdbId);
 
-    return redirect()->route('media.index')->with('success', 'Media toegevoegd!');
-}
-public function create()
-{
-    return view('media.create'); // Zorg dat deze view bestaat
-}
+        if (isset($details['Error'])) {
+            abort(404, 'Film/serie niet gevonden.');
+        }
+
+        return view('media.details', compact('details'));
+    }
+
+    // Redirect bij het proberen te tonen van een media vanuit de database
+    public function show($id)
+    {
+        return redirect()->route('media.search'); // Stuur gebruikers door naar de zoekpagina
+    }
 }
